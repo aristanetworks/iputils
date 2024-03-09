@@ -1804,7 +1804,7 @@ int ping4_parse_reply(struct ping_rts *rts, struct socket_st *sock,
 		if (gather_statistics(rts, (uint8_t *)icp, sizeof(*icp), cc,
 				      ntohs(icp->un.echo.sequence),
 				      reply_ttl, 0, tv, pr_addr(rts, from, sizeof *from),
-				      pr_echo_reply, rts->multicast)) {
+				      pr_echo_reply, rts->multicast, 0)) {
 			fflush(stdout);
 			return 0;
 		}
