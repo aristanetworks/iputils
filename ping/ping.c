@@ -1757,7 +1757,8 @@ int ping4_parse_reply(struct ping_rts *rts, struct socket_st *sock,
 
 		sequence = ntohs(icp->un.echo.sequence);
 		state = (sequence & 0xe0) >> 5;
-		printf("Interface: %s\n", rts->interface);
+		printf("%s: %s\n", rts->probe_remote ? "Remote Address" : "Interface",
+				   rts->interface);
 		switch (icp->code) {
 			case 0:
 				/* no error */
