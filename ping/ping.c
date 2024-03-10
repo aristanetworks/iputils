@@ -333,6 +333,8 @@ main(int argc, char **argv)
 		.cap_admin = CAP_NET_ADMIN,
 #endif
 		.pmtudisc = -1,
+		.probe = 0,
+		.probe_remote = 0,
 		.source.sin_family = AF_INET,
 		.source6.sin6_family = AF_INET6,
 		.ni.query = -1,
@@ -363,7 +365,7 @@ main(int argc, char **argv)
 		hints.ai_family = AF_INET6;
 
 	/* Parse command line options */
-	while ((ch = getopt(argc, argv, "h?" "4bRT:" "6F:N:" "aABc:CdDe:E:fHi:I:l:Lm:M:nOp:qQ:rs:S:t:UvVw:W:")) != EOF) {
+	while ((ch = getopt(argc, argv, "h?" "4bRT:" "6F:N:" "aABc:CdDe:E:fHi:I:l:Lm:M:nOp:qQ:rs:S:t:UvVw:W:Z")) != EOF) {
 		switch(ch) {
 		/* IPv4 specific options */
 		case '4':
@@ -432,6 +434,10 @@ main(int argc, char **argv)
 			break;
 		case 'D':
 			rts.opt_ptimeofday = 1;
+			break;
+		case 'E':
+			rts.probe = 1;
+			rts.interface = optarg;
 			break;
 		case 'H':
 			rts.opt_force_lookup = 1;
@@ -561,9 +567,8 @@ main(int argc, char **argv)
 			rts.lingertime = (int)(optval * 1000);
 		}
 			break;
-		case 'E':
-			rts.probe = 1;
-			rts.interface = optarg;
+		case 'Z':
+			rts.probe_remote = 1;
 			break;
 		default:
 			usage();
@@ -1593,7 +1598,7 @@ build_probe:
 	icp->type = ICMP_EXT_ECHO;
 	/* PROBE messages use only the first 8 bits as sequence number */
 	icp->un.echo.sequence = htons((rts->ntransmitted + 1) << 8);
-	icp->un.echo.sequence |= htons(1);	/* Set L-bit */
+	icp->un.echo.sequence |= htons(rts->probe_remote ? 0 : 1);	/* Set L-bit appropriately */
 	WRITE_VERSION(ext.v_rsvd , 2);
 	ext.v_rsvd = htons(ext.v_rsvd);
 	ext.checksum = 0;
@@ -1751,7 +1756,7 @@ int ping4_parse_reply(struct ping_rts *rts, struct socket_st *sock,
 			return 1;			/* 'Twas not our ECHO */
 
 		sequence = ntohs(icp->un.echo.sequence);
-		state = icp->un.echo.sequence & 0xe0;
+		state = (sequence & 0xe0) >> 5;
 		printf("Interface: %s\n", rts->interface);
 		switch (icp->code) {
 			case 0:
@@ -1773,41 +1778,44 @@ int ping4_parse_reply(struct ping_rts *rts, struct socket_st *sock,
 				printf("Unknown error code %d\n", icp->code);
 				break;
 		}
-		switch (state) {
-			case 1:
-				printf("State: Incomplete\n");
-				break;
-			case 2:
-				printf("State: Reachable\n");
-				break;
-			case 3:
-				printf("State: Stale\n");
-				break;
-			case 4:
-				printf("State: Delay\n");
-				break;
-			case 5:
-				printf("State: Probe\n");
-				break;
-			case 6:
-				printf("State: Failed\n");
-				break;
-			default:
-				break;
-		}
 		if (icp->code == 0) {
-			if ((sequence & ICMP_EXT_ECHOREPLY_ACTIVE) != 0) {
-				printf("Status: ACTIVE");
-				if (sequence & ICMP_EXT_ECHOREPLY_IPV4)
-					printf(" IPV4");
-				if (sequence & ICMP_EXT_ECHOREPLY_IPV6)
-					printf(" IPV6");
-				if (!(sequence & (ICMP_EXT_ECHOREPLY_IPV4 | ICMP_EXT_ECHOREPLY_IPV6)))
-					printf(" no-IPV4 no-IPV6");
+			if (rts->probe_remote == 0) {
+				if ((sequence & ICMP_EXT_ECHOREPLY_ACTIVE) != 0) {
+					printf("Status: ACTIVE");
+					if (sequence & ICMP_EXT_ECHOREPLY_IPV4)
+						printf(" IPV4");
+					if (sequence & ICMP_EXT_ECHOREPLY_IPV6)
+						printf(" IPV6");
+					if (!(sequence & (ICMP_EXT_ECHOREPLY_IPV4 | ICMP_EXT_ECHOREPLY_IPV6)))
+						printf(" no-IPV4 no-IPV6");
+				} else {
+					printf("Status: INACTIVE");
+				}
+				printf("\n");
 			} else {
-				printf("Status: INACTIVE");
+				switch (state) {
+					case 1:
+						printf("State: Incomplete\n");
+						break;
+					case 2:
+						printf("State: Reachable\n");
+						break;
+					case 3:
+						printf("State: Stale\n");
+						break;
+					case 4:
+						printf("State: Delay\n");
+						break;
+					case 5:
+						printf("State: Probe\n");
+						break;
+					case 6:
+						printf("State: Failed\n");
+						break;
+					default:
+						printf("Unknown state %d\n", state);
+				}
 			}
-			printf("\n");
 		}
 		if (gather_statistics(rts, (uint8_t *)icp, sizeof(*icp), cc,
 				      ntohs(icp->un.echo.sequence),

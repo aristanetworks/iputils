@@ -285,6 +285,7 @@ struct ping_rts {
 	uint32_t timestamp_offset;
 	char* interface;
 	int probe;
+	int probe_remote;
 #ifdef HAVE_LIBCAP
 	cap_value_t cap_raw;
 	cap_value_t cap_admin;
