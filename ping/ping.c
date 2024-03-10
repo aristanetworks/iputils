@@ -1798,8 +1798,12 @@ int ping4_parse_reply(struct ping_rts *rts, struct socket_st *sock,
 					printf(" IPV4");
 				if (sequence & ICMP_EXT_ECHOREPLY_IPV6)
 					printf(" IPV6");
-			printf("\n");
+				if (!(sequence & (ICMP_EXT_ECHOREPLY_IPV4 | ICMP_EXT_ECHOREPLY_IPV6)))
+					printf(" no-IPV4 no-IPV6");
+			} else {
+				printf("Status: INACTIVE");
 			}
+			printf("\n");
 		}
 		if (gather_statistics(rts, (uint8_t *)icp, sizeof(*icp), cc,
 				      ntohs(icp->un.echo.sequence),
