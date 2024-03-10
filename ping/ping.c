@@ -1609,6 +1609,8 @@ build_probe:
 	if (iio.ctype > 3)
 		/* MUST NOT */
 		error(2, 0, _("invalid ctype"));
+	if (iio.ctype != ICMP_EXT_ECHO_CTYPE_ADDR && rts->probe_remote == 1)
+		error(2, 0, _("must use IP address for remote probe"));
 
 	rcvd_clear(rts, rts->ntransmitted + 1);
 
