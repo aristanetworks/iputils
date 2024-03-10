@@ -1656,8 +1656,8 @@ build_probe:
 	memcpy(extbase, &ext, sizeof(ext));
 	memcpy(iiobase, &iio, sizeof(iio));
 
-	icp->checksum = in_cksum((unsigned short *)&ext, sizeof(ext), ~icp->checksum);
-	icp->checksum = in_cksum((unsigned short *)&iio, sizeof(iio), ~icp->checksum);
+	extbase->checksum = in_cksum((unsigned short *)extbase, sizeof(ext) + ntohs(iio.len), 0);
+
 	goto send_msg;
 }
 
