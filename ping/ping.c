@@ -1754,6 +1754,9 @@ int ping4_parse_reply(struct ping_rts *rts, struct socket_st *sock,
 		state = icp->un.echo.sequence & 0xe0;
 		printf("Interface: %s\n", rts->interface);
 		switch (icp->code) {
+			case 0:
+				/* no error */
+				break;
 			case 1:
 				printf("Error: Malformed Query\n");
 				break;
@@ -1767,6 +1770,7 @@ int ping4_parse_reply(struct ping_rts *rts, struct socket_st *sock,
 				printf("Error: Multiple Interfaces Satisfy Query\n");
 				break;
 			default:
+				printf("Unknown error code %d\n", icp->code);
 				break;
 		}
 		switch (state) {
