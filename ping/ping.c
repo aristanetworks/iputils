@@ -1617,7 +1617,7 @@ build_probe:
 	/* Create IIO addr info based on C-Type */
 	switch (iio.ctype) {
 	case ICMP_EXT_ECHO_CTYPE_NAME:
-		iio.len += ((strlen(rts->interface)-1)/4)*4;
+		iio.len += ((strlen(rts->interface)+3)/4)*4;
 		/* pad to 32-bit boundary */
 		memset(iiobase + 1 + ((strlen(rts->interface)-1)/4), 0, sizeof(uint32_t));
 		memcpy(iiobase + 1, rts->interface, strlen(rts->interface));
