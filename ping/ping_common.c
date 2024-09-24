@@ -314,7 +314,7 @@ int check_ifname(const char *name)
 		return -1;
 
 	while (*name) {
-		if (*name == '/' || isspace(*name))
+		if (isspace(*name))
 			return -1;
 		++name;
 	}
