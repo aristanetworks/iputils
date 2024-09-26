@@ -312,11 +312,9 @@ int check_ifname(const char *name)
 	/* These checks mimic kernel checks in dev_valid_name */
 	if (*name == '\0')
 		return -1;
-	if (strlen(name) >= IFNAMSIZ)
-		return -1;
 
 	while (*name) {
-		if (*name == '/' || isspace(*name))
+		if (isspace(*name))
 			return -1;
 		++name;
 	}
